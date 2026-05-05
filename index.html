@@ -6,16 +6,8 @@
 <title>Road Game</title>
 
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: Arial;
-}
-
-canvas {
-  display: block;
-}
-
+body { margin: 0; overflow: hidden; }
+canvas { display: block; }
 #hud {
   position: absolute;
   top: 10px;
@@ -23,7 +15,8 @@ canvas {
   color: white;
   background: rgba(0,0,0,0.5);
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-family: Arial;
 }
 </style>
 </head>
@@ -31,9 +24,9 @@ canvas {
 <body>
 
 <div id="hud">
-  <div>⛽ Combustível: <span id="fuel">100</span></div>
-  <div>🚗 Velocidade: <span id="speed">0</span></div>
-  <div>📍 Distância: <span id="distance">12</span> km</div>
+⛽ Combustível: <span id="fuel">100</span><br>
+🚗 Velocidade: <span id="speed">0</span><br>
+📍 Distância: <span id="distance">12</span> km
 </div>
 
 <canvas id="game"></canvas>
@@ -46,7 +39,7 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let car = {
-  x: 100,
+  x: 200,
   y: 300,
   speed: 0,
   fuel: 100,
@@ -58,39 +51,73 @@ let keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
-function drawBackground() {
-  let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, "#ff9966");
-  gradient.addColorStop(1, "#2c3e50");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// 🌄 Montanhas (parallax)
+function drawMountains(offset, color, height, speed) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let x = 0; x < canvas.width; x++) {
+    let y = height + Math.sin((x + offset * speed) * 0.005) * 50;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.lineTo(0, canvas.height);
+  ctx.fill();
 }
 
+// ☀️ Sol
+function drawSun() {
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, 150, 60, 0, Math.PI * 2);
+  ctx.fillStyle = "#FFD27F";
+  ctx.fill();
+}
+
+// 🌲 Árvores simples
+function drawTrees(offset) {
+  for (let i = 0; i < canvas.width; i += 200) {
+    let x = (i - offset * 2) % canvas.width;
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.moveTo(x, 350);
+    ctx.lineTo(x + 20, 300);
+    ctx.lineTo(x + 40, 350);
+    ctx.fill();
+  }
+}
+
+// 🛣️ Estrada
 function drawRoad() {
   ctx.fillStyle = "#444";
-  ctx.fillRect(0, 350, canvas.width, 100);
+  ctx.fillRect(0, 400, canvas.width, 150);
 }
 
+// 🚗 Carro (melhorado)
 function drawCar() {
-  ctx.fillStyle = "green";
-  ctx.fillRect(car.x, car.y, 60, 30);
+  ctx.fillStyle = "#2ecc71";
+  ctx.fillRect(car.x, car.y, 60, 25);
+
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(car.x + 10, car.y + 25, 7, 0, Math.PI*2);
+  ctx.arc(car.x + 50, car.y + 25, 7, 0, Math.PI*2);
+  ctx.fill();
 }
+
+let worldOffset = 0;
 
 function update() {
   if (keys["ArrowRight"] && car.fuel > 0) {
     car.speed += 0.05;
     car.fuel -= 0.03;
     car.distance -= 0.01;
+    worldOffset += car.speed * 2;
   } else {
     car.speed *= 0.98;
   }
 
-  car.x += car.speed;
+  // relevo
+  car.y = 360 + Math.sin(worldOffset * 0.01) * 20;
 
-  // efeito de subida/descida
-  car.y = 300 + Math.sin(car.x * 0.01) * 50;
-
-  // limite
   if (car.distance <= 0) {
     alert("Você chegou na Vila das Colinas!");
     location.reload();
@@ -111,8 +138,19 @@ function drawHUD() {
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawBackground();
+  // céu
+  let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#ff9966");
+  gradient.addColorStop(1, "#2c3e50");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawSun();
+  drawMountains(worldOffset, "#6b4f4f", 250, 0.2);
+  drawMountains(worldOffset, "#4b3832", 300, 0.5);
+  drawTrees(worldOffset);
   drawRoad();
+
   update();
   drawCar();
   drawHUD();
