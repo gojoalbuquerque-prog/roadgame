@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Road Game</title>
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial;
+}
+
+canvas {
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  background: rgba(0,0,0,0.5);
+  padding: 10px;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="hud">
+  <div>⛽ Combustível: <span id="fuel">100</span></div>
+  <div>🚗 Velocidade: <span id="speed">0</span></div>
+  <div>📍 Distância: <span id="distance">12</span> km</div>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let car = {
+  x: 100,
+  y: 300,
+  speed: 0,
+  fuel: 100,
+  distance: 12
+};
+
+let keys = {};
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function drawBackground() {
+  let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#ff9966");
+  gradient.addColorStop(1, "#2c3e50");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawRoad() {
+  ctx.fillStyle = "#444";
+  ctx.fillRect(0, 350, canvas.width, 100);
+}
+
+function drawCar() {
+  ctx.fillStyle = "green";
+  ctx.fillRect(car.x, car.y, 60, 30);
+}
+
+function update() {
+  if (keys["ArrowRight"] && car.fuel > 0) {
+    car.speed += 0.05;
+    car.fuel -= 0.03;
+    car.distance -= 0.01;
+  } else {
+    car.speed *= 0.98;
+  }
+
+  car.x += car.speed;
+
+  // efeito de subida/descida
+  car.y = 300 + Math.sin(car.x * 0.01) * 50;
+
+  // limite
+  if (car.distance <= 0) {
+    alert("Você chegou na Vila das Colinas!");
+    location.reload();
+  }
+
+  if (car.fuel <= 0) {
+    alert("Acabou o combustível!");
+    location.reload();
+  }
+}
+
+function drawHUD() {
+  document.getElementById("fuel").innerText = car.fuel.toFixed(0);
+  document.getElementById("speed").innerText = car.speed.toFixed(1);
+  document.getElementById("distance").innerText = car.distance.toFixed(1);
+}
+
+function loop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawBackground();
+  drawRoad();
+  update();
+  drawCar();
+  drawHUD();
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
